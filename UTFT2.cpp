@@ -5,7 +5,7 @@
 #define DUETT 1
 	
 
-void UTFT2::LCD_Writ_Bus(char VH,char VL, byte mode)
+void UTFT2::LCD_Writ_Bus(char VH,char VL)
 {   
 	REG_PIOC_CODR=0xFF3FC;
 	REG_PIOC_SODR=(VL<<2) & 0x3FC;
@@ -13,10 +13,6 @@ void UTFT2::LCD_Writ_Bus(char VH,char VL, byte mode)
 	REG_PIOB_CODR=0x00200000;REG_PIOB_SODR=0x00200000;
 }
 
-void UTFT2::_set_direction_registers(byte mode)
-{
-
-}
 
 void UTFT2::_fast_fill_16(int ch, int cl, long pix)
 {
@@ -60,63 +56,33 @@ UTFT2::UTFT2()
 
 UTFT2::UTFT2(byte model, int RS, int WR, int CS, int RST, int SER)
 { 
-
 	disp_x_size =			239;
 	disp_y_size =			319;
-	display_transfer_mode =	16;
-	display_model =			model;
-
-#if defined(DUETT)
-	RS=53;
-	WR=52;
-	RST=24;
-#endif
-
-	__p1 = RS;
-	__p4 = RST;
-
-	P_RS	= portOutputRegister(digitalPinToPort(RS));
-	B_RS	= digitalPinToBitMask(RS);
 }
 
 void UTFT2::LCD_Write_COM(char VL)  
 {   
-		cbi(P_RS, B_RS);
-		LCD_Writ_Bus(0x00,VL,display_transfer_mode);
+		REG_PIOB_CODR=0x00004000;
+		LCD_Writ_Bus(0x00,VL);
 
 }
 
 void UTFT2::LCD_Write_DATA(char VH,char VL)
 {
-		sbi(P_RS, B_RS);
-		LCD_Writ_Bus(VH,VL,display_transfer_mode);
+		REG_PIOB_SODR=0x00004000;
+		LCD_Writ_Bus(VH,VL);
 }
 
 void UTFT2::LCD_Write_DATA(char VL)
 {
-		sbi(P_RS, B_RS);
-		LCD_Writ_Bus(0x00,VL,display_transfer_mode);
+		REG_PIOB_SODR=0x00004000;
+		LCD_Writ_Bus(0x00,VL);
 
-}
-
-void UTFT2::LCD_Write_COM_DATA(char com1,int dat1)
-{
-     LCD_Write_COM(com1);
-     LCD_Write_DATA(dat1>>8,dat1);
 }
 
 void UTFT2::InitLCD(byte orientation)
 {
 	orient=orientation;
-
-	// pinMode(__p1,OUTPUT);
-	// pinMode(__p4,OUTPUT);
-	// _set_direction_registers(display_transfer_mode);
-	
-	
-			//pinMode(53,OUTPUT);
-			
-
 
 	REG_PIOB_PER=0x00200000;  // Enable WR pin (B.21) 
 	REG_PIOB_OER=0x00200000;  // Set WR pin (B.21) as output
@@ -292,9 +258,10 @@ void UTFT2::fillRect(int x1, int y1, int x2, int y2)
 	{
 		swap(int, y1, y2);
 	}
-				setXY(x1, y1, x2, y2);
-		sbi(P_RS, B_RS);
-		_fast_fill_16(fch,fcl,((long(x2-x1)+1)*(long(y2-y1)+1)));
+	
+	setXY(x1, y1, x2, y2);
+	REG_PIOB_SODR=0x00004000;
+	_fast_fill_16(fch,fcl,((long(x2-x1)+1)*(long(y2-y1)+1)));
 	
 }
 
@@ -396,8 +363,8 @@ void UTFT2::clrScr()
 {
 	long i;
 	
-		clrXY();
-	sbi(P_RS, B_RS);
+	clrXY();
+	REG_PIOB_SODR=0x00004000;
 	_fast_fill_16(0,0,((disp_x_size+1)*(disp_y_size+1)));
 
 }
@@ -416,8 +383,8 @@ void UTFT2::fillScr(word color)
 	ch=byte(color>>8);
 	cl=byte(color & 0xFF);
 
-		clrXY();
-	sbi(P_RS, B_RS);
+	clrXY();
+	REG_PIOB_SODR=0x00004000;
 	_fast_fill_16(ch,cl,((disp_x_size+1)*(disp_y_size+1)));
 
 }
@@ -470,7 +437,7 @@ void UTFT2::setPixel(word color)
 
 void UTFT2::drawPixel(int x, int y)
 {
-		setXY(x, y, x, y);
+	setXY(x, y, x, y);
 	setPixel((fch<<8)|fcl);
 
 	clrXY();
@@ -538,8 +505,9 @@ void UTFT2::drawHLine(int x, int y, int l)
 		l = -l;
 		x -= l;
 	}
-		setXY(x, y, x+l, y);
-	sbi(P_RS, B_RS);
+	
+	setXY(x, y, x+l, y);
+	REG_PIOB_SODR=0x00004000;
 	_fast_fill_16(fch,fcl,l);
 
 	clrXY();
@@ -552,9 +520,10 @@ void UTFT2::drawVLine(int x, int y, int l)
 		l = -l;
 		y -= l;
 	}
-		setXY(x, y, x, y+l);
-		sbi(P_RS, B_RS);
-		_fast_fill_16(fch,fcl,l);
+	
+	setXY(x, y, x, y+l);
+	REG_PIOB_SODR=0x00004000;
+	_fast_fill_16(fch,fcl,l);
 
 	clrXY();
 }
@@ -937,7 +906,7 @@ void UTFT2::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int de
 		drawBitmap(x, y, sx, sy, data);
 	else
 	{
-				for (ty=0; ty<sy; ty++)
+		for (ty=0; ty<sy; ty++)
 			for (tx=0; tx<sx; tx++)
 			{
 				col=pgm_read_word(&data[(ty*sx)+tx]);
@@ -953,48 +922,6 @@ void UTFT2::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int de
 	clrXY();
 }
 
-void UTFT2::lcdOff()
-{
-		switch (display_model)
-	{
-	case PCF8833:
-		LCD_Write_COM(0x28);
-		break;
-	case CPLD:
-		LCD_Write_COM_DATA(0x01,0x0000);
-		LCD_Write_COM(0x0F);   
-		break;
-	}
-
-}
-
-void UTFT2::lcdOn()
-{
-		switch (display_model)
-	{
-	case PCF8833:
-		LCD_Write_COM(0x29);
-		break;
-	case CPLD:
-		LCD_Write_COM_DATA(0x01,0x0010);
-		LCD_Write_COM(0x0F);   
-		break;
-	}
-
-}
-
-void UTFT2::setContrast(char c)
-{
-		switch (display_model)
-	{
-	case PCF8833:
-		if (c>64) c=64;
-		LCD_Write_COM(0x25);
-		LCD_Write_DATA(c);
-		break;
-	}
-
-}
 
 int UTFT2::getDisplayXSize()
 {
@@ -1012,41 +939,3 @@ int UTFT2::getDisplayYSize()
 		return disp_x_size+1;
 }
 
-void UTFT2::setBrightness(byte br)
-{
-	switch (display_model)
-	{
-	case CPLD:
-		if (br>16) br=16;
-		LCD_Write_COM_DATA(0x01,br);
-		LCD_Write_COM(0x0F);   
-		break;
-	}
-
-}
-
-void UTFT2::setDisplayPage(byte page)
-{
-	switch (display_model)
-	{
-	case CPLD:
-		if (page>7) page=7;
-		LCD_Write_COM_DATA(0x04,page);
-		LCD_Write_COM(0x0F);   
-		break;
-	}
-
-}
-
-void UTFT2::setWritePage(byte page)
-{
-	switch (display_model)
-	{
-	case CPLD:
-		if (page>7) page=7;
-		LCD_Write_COM_DATA(0x05,page);
-		LCD_Write_COM(0x0F);   
-		break;
-	}
-
-}

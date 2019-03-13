@@ -249,14 +249,8 @@ class UTFT2
 		uint8_t	getFontYsize();
 		void	drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale=1);
 		void	drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
-		void	lcdOff();
-		void	lcdOn();
-		void	setContrast(char c);
 		int		getDisplayXSize();
 		int		getDisplayYSize();
-		void	setBrightness(byte br);
-		void	setDisplayPage(byte page);
-		void	setWritePage(byte page);
 
 /*
 	The functions and variables below should not normally be used.
@@ -269,18 +263,13 @@ class UTFT2
 		byte			fch, fcl, bch, bcl;
 		byte			orient;
 		long			disp_x_size, disp_y_size;
-		byte			display_model, display_transfer_mode, display_serial_mode;
-		regtype			*P_RS, *P_WR, *P_CS, *P_RST, *P_SDA, *P_SCL, *P_ALE;
-		regsize			B_RS, B_WR, B_CS, B_RST, B_SDA, B_SCL, B_ALE;
-		byte			__p1, __p2, __p3, __p4, __p5;
 		_current_font	cfont;
 		boolean			_transparent;
 
-		void LCD_Writ_Bus(char VH,char VL, byte mode);
+		void LCD_Writ_Bus(char VH,char VL);
 		void LCD_Write_COM(char VL);
 		void LCD_Write_DATA(char VH,char VL);
 		void LCD_Write_DATA(char VL);
-		void LCD_Write_COM_DATA(char com1,int dat1);
 		void _hw_special_init();
 		void setPixel(word color);
 		void drawHLine(int x, int y, int l);
@@ -289,14 +278,13 @@ class UTFT2
 		void setXY(word x1, word y1, word x2, word y2);
 		void clrXY();
 		void rotateChar(byte c, int x, int y, int pos, int deg);
-		void _set_direction_registers(byte mode);
 		void _fast_fill_16(int ch, int cl, long pix);
 		void _fast_fill_8(int ch, long pix);
 		void _convert_float(char *buf, double num, int width, byte prec);
 
-#if defined(ENERGIA)
-		volatile uint32_t* portOutputRegister(int value);
-#endif
+// #if defined(ENERGIA)
+		// volatile uint32_t* portOutputRegister(int value);
+// #endif
 };
 
 #endif
